@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/Dahs81/example_micro_service/controllers"
+	"github.com/Dahs81/coffee_micro_service/controllers"
 	"github.com/Dahs81/simple-mgo-db/db"
 	"github.com/julienschmidt/httprouter"
 )

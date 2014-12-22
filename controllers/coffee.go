@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Dahs81/example_micro_service/models"
+	"github.com/Dahs81/coffee_micro_service/models"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -37,7 +37,8 @@ func (cc CoffeeController) CreateCoffee(w http.ResponseWriter, r *http.Request, 
 
 // GetCoffee - Function that retrieves a single coffee drink
 func (cc CoffeeController) GetCoffee(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	// Get the id from the httprouter.Params
+	// Lines 42 - 51 could be abstracted out
+	// Get the id from the httprouter.Params - This returns a string
 	id := params.ByName("id")
 
 	// Make sure id is of type ObjectId
@@ -67,7 +68,21 @@ func (cc CoffeeController) GetCoffee(w http.ResponseWriter, r *http.Request, par
 
 // UpdateCoffee -
 func (cc CoffeeController) UpdateCoffee(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	c := models.Coffee{}
 
+	json.NewDecoder(r.Body).Decode(&c)
+
+	c.ID = bson.NewObjectId()
+
+	cc.Session.DB("coffee").C("coffees").Insert(c)
+
+	// Marshal converts Go struct to JSON
+	jsn, _ := json.Marshal(c)
+
+	// Write content-type, statuscode, payload
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	fmt.Fprintf(w, "%s", jsn)
 }
 
 // DeleteCoffee -

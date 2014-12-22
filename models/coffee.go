@@ -1,3 +1,5 @@
+// Package models - Stores the model data for all model types and their behavior
+// Currently there is just a single model type that has no behavior, but more could be added if needed
 package models
 
 import "gopkg.in/mgo.v2/bson"

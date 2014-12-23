@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -25,7 +26,38 @@ func NewCoffeeController(ses *mgo.Session) *CoffeeController {
 
 // GetAllCoffee - Function that retrieves all the different coffee drinks
 func (cc CoffeeController) GetAllCoffee(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	// query object
+	query := bson.M{}
 
+	search := r.URL.Query()
+
+	// TODO: Check what this should be queried by
+	for _, name := range []string{"name", "price", "size"} {
+		if search[name] != nil {
+			query[name] = search[name][0]
+		}
+	}
+
+	coffees := []models.Coffee{}
+
+	// Find all by the query that is entered
+	cc.Session.DB("coffee").C("coffees").Find(query).Iter().All(&coffees)
+
+	// If only one is found, the return the object, else return an array of objects
+	switch len(coffees) {
+	case 0:
+		fmt.Fprintf(w, "%s", errors.New("This is an error"))
+	case 1:
+		fmt.Println("case 1")
+		jsn, _ := json.Marshal(coffees[0])
+		w.WriteHeader(200)
+		fmt.Fprintf(w, "%s", jsn)
+	default:
+		fmt.Println("did I get here?")
+		jsnArr, _ := json.Marshal(coffees)
+		w.WriteHeader(200)
+		fmt.Fprintf(w, "%s", jsnArr)
+	}
 }
 
 // CreateCoffee - Function that creates a new coffee drink
@@ -56,15 +88,16 @@ func (cc CoffeeController) GetCoffee(w http.ResponseWriter, r *http.Request, par
 	// Make sure id is of type ObjectId
 	if !bson.IsObjectIdHex(id) {
 		w.WriteHeader(404)
+		fmt.Fprintf(w, "Error: Not found")
 		return
 	}
 
 	// Get id
-	convertedID := bson.ObjectIdHex(id)
+	cid := bson.ObjectIdHex(id)
 
 	c := models.Coffee{}
 
-	if err := cc.Session.DB("coffee").C("coffees").FindId(convertedID).One(&c); err != nil {
+	if err := cc.Session.DB("coffee").C("coffees").FindId(cid).One(&c); err != nil {
 		w.WriteHeader(404)
 		return
 	}
@@ -80,10 +113,38 @@ func (cc CoffeeController) GetCoffee(w http.ResponseWriter, r *http.Request, par
 
 // UpdateCoffee -
 func (cc CoffeeController) UpdateCoffee(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	// id := params.ByName("id")
+	//
+	// if !bson.IsObjectIdHex() {
+	// 	return w.WriteHeader(404)
+	// }
+	//
+	// cid := bson.ObjectIdHex(id)
+	//
+	// c:= models.Coffee{}
+	//
+	// update := map[string]interface{}{}
+	//
+	// if err := cc.Session.DB("coffee").C("coffees").UpdateId(cid.ID, cid)
 
 }
 
 // DeleteCoffee -
 func (cc CoffeeController) DeleteCoffee(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	id := params.ByName("id")
 
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Get id
+	cid := bson.ObjectIdHex(id)
+
+	if err := cc.Session.DB("coffee").C("coffees").RemoveId(cid); err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	w.WriteHeader(200)
 }

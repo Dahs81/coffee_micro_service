@@ -48,12 +48,10 @@ func (cc CoffeeController) GetAllCoffee(w http.ResponseWriter, r *http.Request, 
 	case 0:
 		fmt.Fprintf(w, "%s", errors.New("This is an error"))
 	case 1:
-		fmt.Println("case 1")
 		jsn, _ := json.Marshal(coffees[0])
 		w.WriteHeader(200)
 		fmt.Fprintf(w, "%s", jsn)
 	default:
-		fmt.Println("did I get here?")
 		jsnArr, _ := json.Marshal(coffees)
 		w.WriteHeader(200)
 		fmt.Fprintf(w, "%s", jsnArr)
@@ -113,20 +111,61 @@ func (cc CoffeeController) GetCoffee(w http.ResponseWriter, r *http.Request, par
 
 // UpdateCoffee -
 func (cc CoffeeController) UpdateCoffee(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	// id := params.ByName("id")
-	//
-	// if !bson.IsObjectIdHex() {
-	// 	return w.WriteHeader(404)
-	// }
-	//
-	// cid := bson.ObjectIdHex(id)
-	//
-	// c:= models.Coffee{}
-	//
-	// update := map[string]interface{}{}
-	//
-	// if err := cc.Session.DB("coffee").C("coffees").UpdateId(cid.ID, cid)
+	// Get the id from the params
+	id := params.ByName("id")
 
+	// Make sure id is of type ObjectId
+	if !bson.IsObjectIdHex(id) {
+		w.WriteHeader(404)
+		fmt.Fprintf(w, "Error: Not found")
+		return
+	}
+
+	// Get id
+	cid := bson.ObjectIdHex(id)
+
+	// Get the old data and store it
+	c := models.Coffee{}
+	if err := cc.Session.DB("coffee").C("coffees").FindId(cid).One(&c); err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	// Map that contains the new payload
+	update := map[string]interface{}{}
+
+	err := json.NewDecoder(r.Body).Decode(&update)
+	if err != nil {
+		fmt.Fprintf(w, "%s", err)
+	}
+	r.Body.Close()
+
+	fmt.Println(update)
+
+	// Check map for update
+	if update["name"] != nil {
+		c.Name = update["name"].(string)
+	}
+
+	if update["price"] != nil {
+		c.Price = update["price"].(string)
+	}
+
+	if update["size"] != nil {
+		c.Size = update["size"].(string)
+	}
+
+	fmt.Println(c)
+
+	cc.Session.DB("coffee").C("coffees").UpdateId(c.ID, c)
+
+	// Marshal converts Go struct to JSON
+	jsn, _ := json.Marshal(c)
+
+	// Write content-type, statuscode, payload
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	fmt.Fprintf(w, "%s", jsn)
 }
 
 // DeleteCoffee -

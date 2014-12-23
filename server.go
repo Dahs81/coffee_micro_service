@@ -16,12 +16,14 @@ func main() {
 	// 3.  Create controller and routes (possibly abstract this)
 	// 4.  Setup http server and listen
 
+	// TODO: Add negroni for middleware
+
 	// Setup and start the mongoDB connection
 	d := db.New()
 	// d.SetEnv(db.Env{Host: "MONGO_HOST_TEST", Port: "MONGO_PORT_TEST"})\
 	d.SetHost("127.0.0.1")
 	d.SetPort(27017)
-	d.Start("coffee")
+	d.Start("coffee") // DB name
 
 	router := httprouter.New()
 

@@ -140,8 +140,6 @@ func (cc CoffeeController) UpdateCoffee(w http.ResponseWriter, r *http.Request, 
 	}
 	r.Body.Close()
 
-	fmt.Println(update)
-
 	// Check map for update
 	if update["name"] != nil {
 		c.Name = update["name"].(string)
@@ -154,8 +152,6 @@ func (cc CoffeeController) UpdateCoffee(w http.ResponseWriter, r *http.Request, 
 	if update["size"] != nil {
 		c.Size = update["size"].(string)
 	}
-
-	fmt.Println(c)
 
 	cc.Session.DB("coffee").C("coffees").UpdateId(c.ID, c)
 
